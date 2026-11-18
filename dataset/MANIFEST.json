@@ -1,0 +1,65 @@
+{
+  "symbol": "SOLUSDT",
+  "source": "Binance data-api.binance.vision SOLUSDT 1h (public, no key)",
+  "source_note": "api.binance.com returns 451 from this VM; api.binance.us has ~100x lower volume, so data-api.binance.vision (global) was used",
+  "fetch_date_utc": "2026-11-18 04:08 UTC",
+  "granularity": "1h (finest practical free granularity for full 12 months; 1m would be ~527k rows)",
+  "first_timestamp": "2025-11-17T00:00:00Z",
+  "last_timestamp_closed": "2026-11-18T03:00:00Z",
+  "excluded": "2026-11-18T04:00:00Z candle was still open at fetch time",
+  "hourly_rows": 8788,
+  "daily_files": 367,
+  "daily_rows": 366,
+  "columns": [
+    "timestamp",
+    "open",
+    "high",
+    "low",
+    "close",
+    "volume",
+    "source"
+  ],
+  "verification": {
+    "duplicate_timestamps": 0,
+    "gaps_non_1h_steps": 0,
+    "ohlc_volume_violations": 0,
+    "daily_aggregate_mismatches": 0,
+    "spot_checks_vs_live": "3/3 exact (2025-11-17, 2026-05-18, 2026-11-17 22:00Z)"
+  },
+  "summary": {
+    "first_close_usd": 139.17,
+    "last_close_usd": 74.8,
+    "change_pct": -46.3,
+    "close_min_usd": 60.88,
+    "close_max_usd": 147.52,
+    "total_volume_sol": 1000695503
+  },
+  "per_month_rows": {
+    "2025-11": 336,
+    "2025-12": 744,
+    "2026-01": 744,
+    "2026-02": 672,
+    "2026-03": 744,
+    "2026-04": 720,
+    "2026-05": 744,
+    "2026-06": 720,
+    "2026-07": 744,
+    "2026-08": 744,
+    "2026-09": 720,
+    "2026-10": 744,
+    "2026-11": 412
+  },
+  "refresh": "python3 ~/workspace/solana/scripts/fetch_binance.py && python3 ~/workspace/solana/scripts/verify_dataset.py && python3 ~/workspace/solana/scripts/forecast.py && python3 ~/workspace/solana/scripts/make_chart_data.py",
+  "refresh_history": [
+    "2026-11-17 23:31 UTC: 8783 rows, last 2026-11-17T22:00:00Z close $74.07",
+    "2026-11-18 00:04 UTC: 8784 rows, last 2026-11-17T23:00:00Z close $75.19",
+    "2026-11-18 00:08 UTC: 8784 rows, last 2026-11-17T23:00:00Z close $75.19",
+    "2026-11-18 00:28 UTC: 8784 rows, last 2026-11-17T23:00:00Z close $75.19",
+    "2026-11-18 01:04 UTC: 8785 rows, last 2026-11-18T00:00:00Z close $74.97",
+    "2026-11-18 01:08 UTC: 8785 rows, last 2026-11-18T00:00:00Z close $74.97",
+    "2026-11-18 02:08 UTC: 8786 rows, last 2026-11-18T01:00:00Z close $74.21",
+    "2026-11-18 03:08 UTC: 8787 rows, last 2026-11-18T02:00:00Z close $74.55",
+    "2026-11-18 03:25 UTC: 8787 rows, last 2026-11-18T02:00:00Z close $74.55",
+    "2026-11-18 04:08 UTC: 8788 rows, last 2026-11-18T03:00:00Z close $74.80"
+  ]
+}
