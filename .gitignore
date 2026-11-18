@@ -1,0 +1,16 @@
+# Hourly sync logs — live operational output, not part of the snapshot
+logs/
+
+# Python bytecode
+__pycache__/
+*.pyc
+*.pyo
+
+# Editor / OS junk
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
