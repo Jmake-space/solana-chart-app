@@ -8,11 +8,11 @@
 ## Coverage
 - **Granularity: hourly (1h candles), full 12 months — this is the finest granularity available for the full period from this free source.** Intraday finer than 1h (e.g. 1m) exists on Binance but would be ~527,000 rows for 12 months and was not pulled; hourly is the finest practical granularity here.
 - **First candle:** 2025-11-17T00:00:00Z, open $137.17, close $139.17
-- **Last candle (closed):** 2026-11-18T03:00:00Z, close $74.80 (refreshed 2026-11-18 04:08 UTC)
+- **Last candle (closed):** 2026-11-18T03:00:00Z, close $74.80 (refreshed 2026-11-18 04:29 UTC)
 - **Rows:** 8,788 hourly candles in 366 daily partition files; 366 daily aggregate rows in `daily/sol_ohlcv_daily.csv`
 - **Close range:** min $60.88, max $147.52; first close $139.17 → last close $74.07 (**-46.8%** over the window)
 - **Total volume:** 1,000,695,503 SOL (hourly sum)
-- **Fetch date:** 2026-11-18 04:08 UTC. The next hourly candle was still open at fetch time and is **excluded** — every row in this dataset is a closed candle.
+- **Fetch date:** 2026-11-18 04:29 UTC. The next hourly candle was still open at fetch time and is **excluded** — every row in this dataset is a closed candle.
 
 ## Layout
 ```

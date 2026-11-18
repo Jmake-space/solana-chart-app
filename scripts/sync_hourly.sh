@@ -3,7 +3,8 @@
 # VM copy:  ~/workspace/solana/  (dataset, forecast.json, chart-data.json, app/)
 # Pi copy:  /mnt/nas02/solana/ on pi5d05 (192.168.1.108, via d06 hop)
 # Steps: fetch (Binance public, no key) -> verify (abort on any failure)
-#   -> forecast v3 -> weekly 12w outlook -> chart-data -> local app rebuild
+#   -> daily OKX OI + L/S collector (non-fatal) -> forecast v4
+#   -> weekly 12w outlook -> chart-data -> local app rebuild
 #   -> manifest update -> daily OKX IV snapshot (non-fatal)
 #   -> rsync VM -> d06 staging -> d05 NVMe -> verify Pi copy (counts + md5)
 # Exit non-zero on any failure, before rsync, so a bad fetch never overwrites the Pi.
@@ -26,14 +27,22 @@ echo "$VERIFY_OUT"
 for pat in "duplicate timestamps: 0" "non-1h steps: 0" "OHLC/volume violations: 0" "daily aggregate mismatches: 0"; do
   echo "$VERIFY_OUT" | grep -qF "$pat" || { echo "FAIL: verification gate missing '$pat'"; exit 1; }
 done
-run python3 forecast_v3.py  # v3 drift30 + tunable vol (2026-11-17); v1/v2 kept intact for comparison
+# Daily OKX SOL open-interest + L/S collector (public REST, no key; added
+# 2026-11-18 for v4). Runs BEFORE the forecast so v4 can use the freshest
+# OI row; no-ops when today's row exists, and MUST NEVER fail this sync:
+# the collector exits 0 on any error, and the || here is belt-and-braces.
+# The OI term is what v4 adds over v3 (see ../models/baseline_v4.md); the
+# L/S ratio is collected for a 30-day re-test only and stays OUT of the model.
+python3 okx_oi_daily.py || echo "OI snapshot step failed (non-fatal, continuing)"
+
+run python3 forecast_v4.py  # v4 = v3 drift30 + vol + OKX OI term (2026-11-18); v1/v2/v3 kept intact for comparison
 run python3 make_chart_data.py
 run python3 build_local_app.py
 run python3 update_manifest.py
 
 # 3-month (12-week) analogue outlook from the 3y weekly data (added
 # 2026-11-18). Writes a `weekly_12w` block into forecast.json; does NOT
-# change v3's daily points (no weekly model beats naive on MAE). Fail-safe:
+# change v4's daily points (no weekly model beats naive on MAE). Fail-safe:
 # the script exits 0 on any error, and the || here is belt-and-braces.
 python3 weekly_outlook.py || echo "Weekly outlook step failed (non-fatal, continuing)"
 

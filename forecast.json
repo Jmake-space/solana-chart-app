@@ -1,13 +1,14 @@
 {
-  "model": "baseline_v3_drift30_vol",
+  "model": "baseline_v4_drift30_vol_oi",
   "label": "Experimental baseline \u2014 NOT financial advice. No trading, no orders, no wallet actions.",
-  "description": "Next-day close = last close x (1 + drift30 x vol-damp), where vol-damp = clamp((3.0% / trailing-30d vol) ^ VOL_ALPHA, 0.25, 1.0). VOL_ALPHA is tunable in config.json (default 1.0; 0 = v2 exactly). Multi-day: same drift damped by 0.85^(h-1)/day. Bands are log-space: point x exp(+-1.96 x log-residual SD x sqrt(h)) \u2014 multiplicative, so the downside stays plausible; vol-scaling the bands was tested and rejected (see limits).",
-  "supersedes": "baseline_v2_drift30 (scripts/forecast_v2.py, models/baseline_v2.md \u2014 kept intact)",
+  "description": "v3 (drift30 x vol-damp) x (1 + OI_K x prev-day dOI%), OI_K = 0.2 in config.json. dOI% is the previous-day % change in OKX SOL-USDT-SWAP open interest (USD notional). The OI term applies to the day-1 step only; multi-day drift is damped by 0.85^(h-1)/day as in v3. Bands are log-space: point x exp(+-1.96 x log-residual SD x sqrt(h)). If the OI series is missing/stale, the term is 0 and v4 == v3.",
+  "supersedes": "baseline_v3_drift30_vol (scripts/forecast_v3.py, models/baseline_v3.md \u2014 kept intact)",
   "config": {
     "drift_window_days": 30,
-    "model": "baseline_v3",
+    "model": "baseline_v4",
     "multi_day_damp": 0.85,
-    "notes": "Tunable vol parameter: VOL_ALPHA. 0 = v2 exactly (no vol effect). 1.0 = inverse-vol damping (default). Edit this file and re-run scripts/forecast_v3.py to retune; the grid in models/baseline_v3.md shows what each alpha does. Band scaling by vol was tested and NOT adopted (see v3 doc).",
+    "notes": "v4 = v3 + OKX open-interest term: pred x (1 + OI_K x prev-day dOI%). OI_K=0 reproduces v3 exactly. VOL_ALPHA: 0 = v2 exactly (no vol effect); 1.0 = inverse-vol damping (default). Edit this file and re-run scripts/forecast_v4.py to retune; grids in models/baseline_v3.md (alpha) and baseline_v4.md (OI_K) show what each does. Band scaling by vol was tested and NOT adopted (see v3 doc). L/S ratio is collected but NOT used (fails out-of-sample).",
+    "oi_k": 0.2,
     "regime_high_pct": 3.5,
     "regime_low_pct": 2.5,
     "vol_alpha": 1.0,
@@ -21,7 +22,11 @@
     "daily_closes": 367,
     "first_date": "2025-11-17",
     "last_date": "2026-11-18",
-    "last_close_usd": 74.8
+    "last_close_usd": 74.8,
+    "oi_source": "OKX rubik open-interest-history, SOL-USDT-SWAP, 1D (oi_series.csv)",
+    "oi_days": 100,
+    "oi_first_date": "2026-08-10",
+    "oi_last_date": "2026-11-17"
   },
   "context": {
     "ma7_usd": 74.93,
@@ -36,193 +41,134 @@
     "regime": "normal",
     "vol_damp": 0.954,
     "daily_vol_30d_pct": 3.14,
-    "resid_sd_90d_usd": 3.17,
-    "resid_sd_log_90d_pct": 3.18
+    "resid_sd_90d_usd": 2.77,
+    "resid_sd_log_90d_pct": 2.85,
+    "oi_k": 0.2,
+    "oi_change_prev_day_pct": 1.36,
+    "oi_usd_millions": 237.2,
+    "oi_stale": false
   },
-  "vol_alpha_grid": {
+  "oi_k_grid": {
     "0": {
-      "last_30d": {
-        "mae_usd": 1.94,
-        "mae_pct": 2.14,
-        "rmse_usd": 2.694,
-        "directional_accuracy_pct": 63.3,
-        "n": 30
-      },
-      "last_90d": {
-        "mae_usd": 2.368,
-        "mae_pct": 2.32,
-        "rmse_usd": 3.199,
-        "directional_accuracy_pct": 55.6,
-        "n": 90
-      },
-      "full_year": {
-        "mae_usd": 2.213,
-        "mae_pct": 2.37,
-        "rmse_usd": 3.076,
-        "directional_accuracy_pct": 49.7,
-        "n": 336
-      }
+      "mae_usd": 2.266,
+      "mae_pct": 2.28,
+      "rmse_usd": 3.142,
+      "directional_accuracy_pct": 52.5,
+      "n": 101
     },
-    "0.5": {
-      "last_30d": {
-        "mae_usd": 1.939,
-        "mae_pct": 2.14,
-        "rmse_usd": 2.694,
-        "directional_accuracy_pct": 63.3,
-        "n": 30
-      },
-      "last_90d": {
-        "mae_usd": 2.364,
-        "mae_pct": 2.31,
-        "rmse_usd": 3.196,
-        "directional_accuracy_pct": 55.6,
-        "n": 90
-      },
-      "full_year": {
-        "mae_usd": 2.207,
-        "mae_pct": 2.36,
-        "rmse_usd": 3.067,
-        "directional_accuracy_pct": 49.7,
-        "n": 336
-      }
+    "0.1": {
+      "mae_usd": 2.126,
+      "mae_pct": 2.14,
+      "rmse_usd": 2.904,
+      "directional_accuracy_pct": 57.4,
+      "n": 101
     },
-    "1.0": {
-      "last_30d": {
-        "mae_usd": 1.938,
-        "mae_pct": 2.13,
-        "rmse_usd": 2.694,
-        "directional_accuracy_pct": 63.3,
-        "n": 30
-      },
-      "last_90d": {
-        "mae_usd": 2.36,
-        "mae_pct": 2.31,
-        "rmse_usd": 3.194,
-        "directional_accuracy_pct": 55.6,
-        "n": 90
-      },
-      "full_year": {
-        "mae_usd": 2.203,
-        "mae_pct": 2.36,
-        "rmse_usd": 3.062,
-        "directional_accuracy_pct": 49.7,
-        "n": 336
-      }
+    "0.2": {
+      "mae_usd": 2.048,
+      "mae_pct": 2.06,
+      "rmse_usd": 2.767,
+      "directional_accuracy_pct": 56.4,
+      "n": 101
     },
-    "1.5": {
-      "last_30d": {
-        "mae_usd": 1.938,
-        "mae_pct": 2.13,
-        "rmse_usd": 2.694,
-        "directional_accuracy_pct": 63.3,
-        "n": 30
-      },
-      "last_90d": {
-        "mae_usd": 2.355,
-        "mae_pct": 2.3,
-        "rmse_usd": 3.192,
-        "directional_accuracy_pct": 55.6,
-        "n": 90
-      },
-      "full_year": {
-        "mae_usd": 2.201,
-        "mae_pct": 2.36,
-        "rmse_usd": 3.058,
-        "directional_accuracy_pct": 49.7,
-        "n": 336
-      }
-    },
-    "2.0": {
-      "last_30d": {
-        "mae_usd": 1.937,
-        "mae_pct": 2.13,
-        "rmse_usd": 2.694,
-        "directional_accuracy_pct": 63.3,
-        "n": 30
-      },
-      "last_90d": {
-        "mae_usd": 2.352,
-        "mae_pct": 2.3,
-        "rmse_usd": 3.19,
-        "directional_accuracy_pct": 55.6,
-        "n": 90
-      },
-      "full_year": {
-        "mae_usd": 2.2,
-        "mae_pct": 2.35,
-        "rmse_usd": 3.056,
-        "directional_accuracy_pct": 49.7,
-        "n": 336
-      }
+    "0.3": {
+      "mae_usd": 2.055,
+      "mae_pct": 2.06,
+      "rmse_usd": 2.746,
+      "directional_accuracy_pct": 58.4,
+      "n": 101
     }
   },
   "backtest": {
-    "method": "1-day-ahead, walk-forward, no look-ahead; vol and damp use only data before the predicted day",
+    "method": "1-day-ahead, walk-forward, no look-ahead; vol, damp and dOI% use only data before the predicted day",
     "windows": {
+      "oi_window": {
+        "mae_usd": 2.048,
+        "mae_pct": 2.06,
+        "rmse_usd": 2.767,
+        "directional_accuracy_pct": 56.4,
+        "n": 101,
+        "per_regime": {
+          "high": {
+            "mae_usd": 2.51,
+            "n": 10,
+            "directional_accuracy_pct": 50.0
+          },
+          "low": {
+            "mae_usd": 1.76,
+            "n": 39,
+            "directional_accuracy_pct": 59.0
+          },
+          "normal": {
+            "mae_usd": 2.18,
+            "n": 52,
+            "directional_accuracy_pct": 55.8
+          }
+        }
+      },
       "last_30d": {
-        "mae_usd": 1.938,
-        "mae_pct": 2.13,
-        "rmse_usd": 2.694,
-        "directional_accuracy_pct": 63.3,
+        "mae_usd": 1.891,
+        "mae_pct": 2.08,
+        "rmse_usd": 2.576,
+        "directional_accuracy_pct": 60.0,
         "n": 30,
         "per_regime": {
           "low": {
-            "mae_usd": 1.9,
+            "mae_usd": 1.8,
             "n": 26,
-            "directional_accuracy_pct": 65.4
+            "directional_accuracy_pct": 61.5
           },
           "normal": {
-            "mae_usd": 2.16,
+            "mae_usd": 2.46,
             "n": 4,
             "directional_accuracy_pct": 50.0
           }
         }
       },
       "last_90d": {
-        "mae_usd": 2.36,
-        "mae_pct": 2.31,
-        "rmse_usd": 3.194,
-        "directional_accuracy_pct": 55.6,
+        "mae_usd": 2.134,
+        "mae_pct": 2.09,
+        "rmse_usd": 2.808,
+        "directional_accuracy_pct": 56.7,
         "n": 90,
         "per_regime": {
           "high": {
-            "mae_usd": 2.94,
+            "mae_usd": 2.51,
             "n": 10,
-            "directional_accuracy_pct": 60.0
+            "directional_accuracy_pct": 50.0
           },
           "low": {
-            "mae_usd": 2.01,
+            "mae_usd": 1.92,
             "n": 28,
-            "directional_accuracy_pct": 64.3
+            "directional_accuracy_pct": 60.7
           },
           "normal": {
-            "mae_usd": 2.43,
+            "mae_usd": 2.18,
             "n": 52,
-            "directional_accuracy_pct": 50.0
+            "directional_accuracy_pct": 55.8
           }
         }
       },
       "full_year_from_day_31": {
-        "mae_usd": 2.203,
-        "mae_pct": 2.36,
-        "rmse_usd": 3.062,
-        "directional_accuracy_pct": 49.7,
+        "mae_usd": 2.137,
+        "mae_pct": 2.29,
+        "rmse_usd": 2.951,
+        "directional_accuracy_pct": 50.9,
         "n": 336,
         "per_regime": {
           "high": {
-            "mae_usd": 2.74,
+            "mae_usd": 2.68,
             "n": 68,
-            "directional_accuracy_pct": 54.4
+            "directional_accuracy_pct": 52.9
           },
           "low": {
-            "mae_usd": 2.0,
+            "mae_usd": 1.96,
             "n": 109,
-            "directional_accuracy_pct": 48.6
+            "directional_accuracy_pct": 50.5
           },
           "normal": {
-            "mae_usd": 2.11,
+            "mae_usd": 2.03,
             "n": 159,
-            "directional_accuracy_pct": 48.4
+            "directional_accuracy_pct": 50.3
           }
         }
       }
@@ -3170,72 +3116,71 @@
     {
       "horizon_days": 1,
       "date": "2026-11-19",
-      "forecast_close_usd": 73.97,
-      "low_95_usd": 69.5,
-      "high_95_usd": 78.73
+      "forecast_close_usd": 74.17,
+      "low_95_usd": 70.14,
+      "high_95_usd": 78.44
     },
     {
       "horizon_days": 2,
       "date": "2026-11-20",
-      "forecast_close_usd": 73.27,
-      "low_95_usd": 67.08,
-      "high_95_usd": 80.03
+      "forecast_close_usd": 73.47,
+      "low_95_usd": 67.88,
+      "high_95_usd": 79.52
     },
     {
       "horizon_days": 3,
       "date": "2026-11-21",
-      "forecast_close_usd": 72.68,
-      "low_95_usd": 65.24,
-      "high_95_usd": 80.98
+      "forecast_close_usd": 72.88,
+      "low_95_usd": 66.15,
+      "high_95_usd": 80.3
     },
     {
       "horizon_days": 7,
       "date": "2026-11-25",
-      "forecast_close_usd": 71.12,
-      "low_95_usd": 60.3,
-      "high_95_usd": 83.88
+      "forecast_close_usd": 71.31,
+      "low_95_usd": 61.5,
+      "high_95_usd": 82.69
     },
     {
       "horizon_days": 14,
       "date": "2026-12-02",
-      "forecast_close_usd": 69.98,
-      "low_95_usd": 55.41,
-      "high_95_usd": 88.38
+      "forecast_close_usd": 70.17,
+      "low_95_usd": 56.92,
+      "high_95_usd": 86.51
     },
     {
       "horizon_days": 30,
       "date": "2026-12-18",
-      "forecast_close_usd": 69.49,
-      "low_95_usd": 49.38,
-      "high_95_usd": 97.79
+      "forecast_close_usd": 69.68,
+      "low_95_usd": 51.29,
+      "high_95_usd": 94.66
     }
   ],
   "limits": [
-    "Vol damping helps only a little: MAE full year $2.22 (alpha 0) -> $2.20 (alpha 1.0-2.0); 90d $2.37 -> $2.36; direction unchanged. It is a small, principled tilt, not a breakthrough.",
-    "Bands are log-space: point x exp(+-1.96 x log-resid-SD x sqrt(h)); 95% coverage 94.3% full-year / 94.4% 90d. The old symmetric dollar bands implied a -52% downside at 30d ($36) and were replaced 2026-11-18 \u2014 a dollar SD estimated when SOL was $140 does not scale down as price falls. Vol-scaling the bands was tested and rejected (coverage 93.4% vs 94.3% for dollar bands).",
-    "Regime thresholds (2.5% / 3.5%) sit near full-sample quartiles, so they are descriptive, not discovered out-of-sample; per-regime n is small in the 90d window (high-vol n=10).",
-    "Current regime is normal (vol30 3.08%), so damp is ~0.97 and v3 barely differs from v2 today \u2014 the parameter matters in high-vol periods, not today.",
-    "No drift variant beats naive on MAE over 90d or the full year (naive $2.33 / $2.17 vs v3 $2.36 / $2.20). Treat the point forecast as weak; the band is the honest statement.",
-    "Replaceable / tunable: edit config.json (VOL_ALPHA, VOL_WINDOW_DAYS, VOL_REF_PCT, regime thresholds) and re-run forecast_v3.py; the grid is recomputed each run."
+    "OI evidence is 99 days only (OKX caps history at 100 rows) \u2014 no full-year leg exists yet. Margin is modest (~$0.20/day on the 99d window). Re-verify after 30 fresh days of collection.",
+    "The L/S ratio is NOT used: best in-sample numbers in the project (corr -0.506, MAE $1.99) but fails out-of-sample ($2.19 vs naive $1.86). It is collected for a 30-day re-test.",
+    "Bands are log-space: point x exp(+-1.96 x log-resid-SD x sqrt(h)); coverage to be re-checked on v4 residuals.",
+    "v4 still does not beat naive on the full year \u2014 the OI series only starts 2026-08-10, so the full-year window is mostly v3. The win is on the 99d OI window.",
+    "Replaceable / tunable: edit config.json (OI_K, VOL_ALPHA) and re-run forecast_v4.py; the grid is recomputed each run. OI_K=0 reproduces v3 exactly."
   ],
   "weekly_12w": {
     "method": "Analogue distribution from 3y weekly data (160 candles). Episodes: weeks with a 4-week return <= -20% (current 4w is -26.6%); forward 12-week returns after those episodes. NOT a point model \u2014 no weekly model beats naive on MAE at 4w/8w/12w, so this is a scenario distribution, not a tuned forecast.",
     "as_of_weekly_close": "2026-11-16",
-    "last_weekly_close_usd": 74.73,
+    "last_weekly_close_usd": 75.05,
     "horizon_weeks": 12,
     "target_date": "2027-02-08",
     "episodes_n": 21,
     "median_return_pct": 3.0,
     "p25_return_pct": -13.8,
     "p75_return_pct": 20.9,
-    "median_usd": 76.94,
-    "p25_usd": 64.45,
-    "p75_usd": 90.32,
+    "median_usd": 77.27,
+    "p25_usd": 64.73,
+    "p75_usd": 90.71,
     "prob_above_100_pct": 19.0,
     "prob_below_minus20_pct": 23.8,
     "prob_positive_pct": 57.1,
-    "dist_below_ma50w_pct": -20.2,
-    "ma50w_usd": 93.62,
-    "weekly_rsi14": 53.3
+    "dist_below_ma50w_pct": -19.8,
+    "ma50w_usd": 93.63,
+    "weekly_rsi14": 53.4
   }
 }
